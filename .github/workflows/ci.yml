@@ -23,4 +23,4 @@ jobs:
           test: true
           lint: true
           use-github-cache: true
-          use-mathlib-cache: true
+          use-mathlib-cache: false
