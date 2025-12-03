@@ -26,7 +26,7 @@ def parseInstruction (s : String) : Option Instruction := do
   match chars with
   | c :: rest =>
     let dir ← parseDirection c
-    let distStr := String.mk rest
+    let distStr := String.ofList rest
     let dist := distStr.toNat?
     match dist with
     | some d => some { dir := dir, dist := d }

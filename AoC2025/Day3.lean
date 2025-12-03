@@ -20,9 +20,9 @@ def maxJoltageK (bank : String) (k : Nat) : Nat :=
       let maxInRange := List.range (endPos - start + 1)
         |>.foldl (fun (bestPos, bestVal) i =>
           let pos := start + i
-          let v := digits.get! pos
+          let v := digits[pos]!
           if v > bestVal then (pos, v) else (bestPos, bestVal))
-        (start, digits.get! start)
+        (start, digits[start]!)
       let (bestPos, bestDigit) := maxInRange
       (bestPos + 1, acc * 10 + bestDigit))
       (0, 0)
