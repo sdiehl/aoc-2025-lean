@@ -42,12 +42,6 @@ def isPatternRepeated (s : String) (patternLen : Nat) : Bool :=
       let repeated := String.join (List.replicate k pattern)
       repeated == s
 
-def isRepeatedPattern (n : Nat) : Bool :=
-  let s := toString n
-  let len := s.length
-  let patternLengths := List.range (len / 2) |>.map (· + 1)
-  patternLengths.any (isPatternRepeated s)
-
 def getRepeatedPatternsInRange (low high : Nat) : List Nat :=
   let lowDigits := numDigits low
   let highDigits := numDigits high

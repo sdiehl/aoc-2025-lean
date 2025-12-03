@@ -28,16 +28,13 @@ def maxJoltageK (bank : String) (k : Nat) : Nat :=
       (0, 0)
     result.2
 
-def maxJoltage2 (bank : String) : Nat :=
-  maxJoltageK bank 2
-
 def solvePart1 (input : String) : Nat :=
   let banks := lines input
-  sum (banks.map maxJoltage2)
+  sum (banks.map (maxJoltageK · 2))
 
 def solvePart2 (input : String) : Nat :=
   let banks := lines input
-  sum (banks.map (fun b => maxJoltageK b 12))
+  sum (banks.map (maxJoltageK · 12))
 
 def run (inputPath : String) : IO Unit := do
   let input ← readFile inputPath

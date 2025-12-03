@@ -16,3 +16,8 @@ lean_lib AoC2025 where
 lean_exe aoc2025 where
   root := `Main
   srcDir := "."
+
+@[test_driver]
+lean_exe tests where
+  root := `Tests.Main
+  srcDir := "."
