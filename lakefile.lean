@@ -1,6 +1,9 @@
 import Lake
 open Lake DSL
 
+require batteries from git
+  "https://github.com/leanprover-community/batteries" @ "main"
+
 package AoC2025 where
   leanOptions := #[
     ⟨`pp.unicode.fun, true⟩,
@@ -20,4 +23,9 @@ lean_exe aoc2025 where
 @[test_driver]
 lean_exe tests where
   root := `Tests.Main
+  srcDir := "."
+
+@[lint_driver]
+lean_exe lint where
+  root := `Lint.Main
   srcDir := "."
