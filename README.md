@@ -1,21 +1,18 @@
 # Advent of Code 2025
 
+[Stephen Diehl](https://adventofcode.com/2025/leaderboard/private/view/5342262?view_key=947bb578) Advent of Code solutions done in Lean 4.
+
 ```bash
 curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh
-
-# Build the project
 lake build
 ```
 
 ```bash
-# Run a specific day
 .lake/build/bin/aoc2025 1
 
 # Run all days
 .lake/build/bin/aoc2025 all
 ```
-
-## Solutions
 
 | Day | Problem | Solution |
 |-----|---------|----------|
