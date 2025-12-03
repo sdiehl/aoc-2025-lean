@@ -1,21 +1,21 @@
 import AoC2025
 
 def main : IO UInt32 := do
-  let inputDir := "/Users/sdiehl/advent_code"
+  let inputDir := "inputs"
 
   IO.println "Running all Advent of Code 2025 solutions..."
   IO.println ""
 
   IO.println "=== Day 1 ==="
-  AoC2025.Day1.run s!"{inputDir}/input"
+  AoC2025.Day1.run s!"{inputDir}/day1.txt"
   IO.println ""
 
   IO.println "=== Day 2 ==="
-  AoC2025.Day2.run s!"{inputDir}/input2"
+  AoC2025.Day2.run s!"{inputDir}/day2.txt"
   IO.println ""
 
   IO.println "=== Day 3 ==="
-  AoC2025.Day3.run s!"{inputDir}/input3"
+  AoC2025.Day3.run s!"{inputDir}/day3.txt"
   IO.println ""
 
   IO.println "All days completed."
