@@ -1,0 +1,14 @@
+.DS_Store
+target/
+.lake
+*.json
+*.olean
+lake-packages
+build.log
+
+# Documentation build
+docbuild/.lake/
+docbuild/lake-manifest.json
+
+.claude
+.codex
