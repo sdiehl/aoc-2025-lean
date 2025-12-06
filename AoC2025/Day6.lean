@@ -1,4 +1,4 @@
-/- Day 6: Trash Compactor -/
+-/- Day 6: Trash Compactor -/
 import AoC2025.Util
 
 namespace AoC2025.Day6
@@ -10,151 +10,126 @@ inductive Op where
   | mul
   deriving Repr, BEq
 
+structure Problem where
+  numbers : List Nat
+  op : Op
+
 def parseOp (c : Char) : Option Op :=
   match c with
   | '+' => some Op.add
   | '*' => some Op.mul
   | _ => none
 
-structure Problem where
-  numbers : List Nat
-  op : Op
-
 def evalProblem (p : Problem) : Nat :=
   match p.op with
   | Op.add => p.numbers.foldl (· + ·) 0
   | Op.mul => p.numbers.foldl (· * ·) 1
 
+def sumResults (problems : List Problem) : Nat :=
+  problems.map evalProblem |>.foldl (· + ·) 0
+
+def splitInput (input : String) (useTrim : Bool) : Option (List String × String) :=
+  let allLines := if useTrim then lines input else linesRaw input
+  if allLines.length < 2 then none
+  else some (allLines.reverse.tail!.reverse, allLines.reverse.head!)
+
 def padRows (rows : List String) : List String :=
   let maxLen := rows.foldl (fun acc r => max acc r.length) 0
-  rows.map (fun r => r ++ String.mk (List.replicate (maxLen - r.length) ' '))
+  rows.map (fun r => r ++ String.ofList (List.replicate (maxLen - r.length) ' '))
 
 def getColumn (rows : List String) (col : Nat) : List Char :=
-  rows.map (fun r => if col < r.length then r.get! ⟨col⟩ else ' ')
+  rows.map (fun r => r.toList.getD col ' ')
 
-def isSeparatorColumn (numRows : List String) (col : Nat) : Bool :=
-  let chars := getColumn numRows col
-  chars.all (· == ' ')
+def isSeparator (rows : List String) (col : Nat) : Bool :=
+  (getColumn rows col).all (· == ' ')
 
-def parseNumberFromColumn (numRows : List String) (col : Nat) : Option Nat :=
-  let chars := getColumn numRows col
-  let digits := chars.filter Char.isDigit
-  if digits.isEmpty then none
-  else
-    let numStr := String.mk digits
-    numStr.toNat?
+def columnToNumber (rows : List String) (col : Nat) : Option Nat :=
+  let digits := (getColumn rows col).filter Char.isDigit
+  if digits.isEmpty then none else (String.ofList digits).toNat?
 
-def getOpFromColumn (opRow : String) (col : Nat) : Option Op :=
-  if col < opRow.length then parseOp (opRow.get! ⟨col⟩) else none
+def columnToOp (opRow : String) (col : Nat) : Option Op :=
+  opRow.toList[col]? |>.bind parseOp
 
--- Part 1: Parse problems left-to-right, numbers are horizontal multi-digit
 def parseNumbersInRow (row : String) : List (Nat × Nat × Nat) :=
-  let rec helper (pos : Nat) (acc : List (Nat × Nat × Nat)) (currentNum : String) (startPos : Nat) : List (Nat × Nat × Nat) :=
+  let rec go (pos : Nat) (acc : List (Nat × Nat × Nat)) (cur : String) (start : Nat) :=
     if pos >= row.length then
-      if currentNum.isEmpty then acc
-      else match currentNum.toNat? with
-        | some n => (n, startPos, pos - 1) :: acc
-        | none => acc
+      match cur.toNat? with
+      | some n => (n, start, pos - 1) :: acc
+      | none => acc
     else
-      let c := row.get! ⟨pos⟩
+      let c := row.toList.getD pos ' '
       if c.isDigit then
-        if currentNum.isEmpty then
-          helper (pos + 1) acc (String.singleton c) pos
-        else
-          helper (pos + 1) acc (currentNum ++ String.singleton c) startPos
+        go (pos + 1) acc (if cur.isEmpty then String.singleton c else cur ++ String.singleton c)
+           (if cur.isEmpty then pos else start)
       else
-        if currentNum.isEmpty then
-          helper (pos + 1) acc "" pos
-        else
-          match currentNum.toNat? with
-          | some n => helper (pos + 1) ((n, startPos, pos - 1) :: acc) "" pos
-          | none => helper (pos + 1) acc "" pos
-  (helper 0 [] "" 0).reverse
+        match cur.toNat? with
+        | some n => go (pos + 1) ((n, start, pos - 1) :: acc) "" pos
+        | none => go (pos + 1) acc "" pos
+  (go 0 [] "" 0).reverse
 
-def mergeOverlappingRanges (ranges : List (Nat × Nat)) : List (Nat × Nat) :=
+def mergeRanges (ranges : List (Nat × Nat)) : List (Nat × Nat) :=
   let sorted := ranges.toArray.qsort (fun a b => a.1 < b.1) |>.toList
   match sorted with
   | [] => []
   | first :: rest =>
-    let (merged, last) := rest.foldl (fun (acc, current) next =>
-      if next.1 <= current.2 + 1 then
-        (acc, (current.1, max current.2 next.2))
-      else
-        (current :: acc, next))
-      ([], first)
+    let (merged, last) := rest.foldl (fun (acc, cur) next =>
+      if next.1 <= cur.2 + 1 then (acc, (cur.1, max cur.2 next.2))
+      else (cur :: acc, next)) ([], first)
     (last :: merged).reverse
 
-def parseProblemsHorizontal (input : String) : List Problem :=
-  let allLines := lines input
-  if allLines.length < 2 then []
-  else
-    let numRows := allLines.reverse.tail!.reverse
-    let opRow := allLines.reverse.head!
-    let numbersPerRow := numRows.map parseNumbersInRow
-    let allRanges := numbersPerRow.foldl (fun acc row =>
-      row.map (fun (_, start, stop) => (start, stop)) ++ acc) []
-    let problemRanges := mergeOverlappingRanges allRanges
-    problemRanges.filterMap (fun (rangeStart, rangeStop) =>
-      let opCharsInRange := List.range (rangeStop - rangeStart + 1)
-        |>.filterMap (fun offset =>
-          let col := rangeStart + offset
-          if col < opRow.length then
-            let c := opRow.get! ⟨col⟩
-            parseOp c
-          else none)
-      match opCharsInRange.head? with
+def findOpInRange (opRow : String) (start stop : Nat) : Option Op :=
+  List.range (stop - start + 1)
+    |>.filterMap (fun off => columnToOp opRow (start + off))
+    |>.head?
+
+def numbersInRange (nums : List (Nat × Nat × Nat)) (start stop : Nat) : List Nat :=
+  nums.filter (fun (_, s, e) => s <= stop && e >= start) |>.map (·.1)
+
+def parseHorizontal (input : String) : List Problem :=
+  match splitInput input true with
+  | none => []
+  | some (numRows, opRow) =>
+    let perRow := numRows.map parseNumbersInRow
+    let ranges := perRow.foldl (fun acc row =>
+      row.map (fun (_, s, e) => (s, e)) ++ acc) []
+    let merged := mergeRanges ranges
+    merged.filterMap fun (start, stop) =>
+      match findOpInRange opRow start stop with
       | none => none
-      | some operation =>
-        let numbers := numbersPerRow.foldl (fun acc row =>
-          let numsInRange := row.filter (fun (_, start, stop) =>
-            start <= rangeStop && stop >= rangeStart)
-          acc ++ numsInRange.map (·.1)) []
-        if numbers.isEmpty then none
-        else some { numbers, op := operation })
+      | some op =>
+        let nums := perRow.foldl (fun acc row => acc ++ numbersInRange row start stop) []
+        if nums.isEmpty then none else some { numbers := nums, op }
 
-def solvePart1 (input : String) : Nat :=
-  let problems := parseProblemsHorizontal input
-  problems.map evalProblem |>.foldl (· + ·) 0
-
--- Part 2: Parse problems where each column is a number, read right-to-left
-partial def parseProblemsVertical (input : String) : List Problem :=
-  let allLines := linesRaw input
-  if allLines.length < 2 then []
-  else
-    let numRows := padRows (allLines.reverse.tail!.reverse)
-    let opRow := allLines.reverse.head!
-    let maxCol := numRows.foldl (fun acc r => max acc r.length) 0
-    -- Read columns right-to-left
-    let rec go (col : Int) (currentNums : List Nat) (currentOp : Option Op) (acc : List Problem) : List Problem :=
+partial def parseVertical (input : String) : List Problem :=
+  match splitInput input false with
+  | none => []
+  | some (numRows, opRow) =>
+    let padded := padRows numRows
+    let maxCol := padded.foldl (fun acc r => max acc r.length) 0
+    let rec go (col : Int) (nums : List Nat) (op : Option Op) (acc : List Problem) :=
       if col < 0 then
-        match currentOp with
-        | some op => if currentNums.isEmpty then acc else { numbers := currentNums, op } :: acc
+        match op with
+        | some o => if nums.isEmpty then acc else { numbers := nums, op := o } :: acc
         | none => acc
       else
         let c := col.toNat
-        if isSeparatorColumn numRows c then
-          match currentOp with
-          | some op =>
-            if currentNums.isEmpty then
-              go (col - 1) [] none acc
-            else
-              go (col - 1) [] none ({ numbers := currentNums, op } :: acc)
+        if isSeparator padded c then
+          match op with
+          | some o => go (col - 1) [] none (if nums.isEmpty then acc else { numbers := nums, op := o } :: acc)
           | none => go (col - 1) [] none acc
         else
-          let maybeNum := parseNumberFromColumn numRows c
-          let maybeOp := getOpFromColumn opRow c
-          let newNums := match maybeNum with
-            | some n => n :: currentNums
-            | none => currentNums
-          let newOp := match maybeOp with
-            | some op => some op
-            | none => currentOp
+          let newNums := match columnToNumber padded c with
+            | some n => n :: nums
+            | none => nums
+          let newOp := match columnToOp opRow c with
+            | some o => some o
+            | none => op
           go (col - 1) newNums newOp acc
     go (maxCol - 1) [] none []
 
-def solvePart2 (input : String) : Nat :=
-  let problems := parseProblemsVertical input
-  problems.map evalProblem |>.foldl (· + ·) 0
+def solvePart1 (input : String) : Nat := sumResults (parseHorizontal input)
+
+def solvePart2 (input : String) : Nat := sumResults (parseVertical input)
 
 def run (inputPath : String) : IO Unit := do
   let input ← readFile inputPath
