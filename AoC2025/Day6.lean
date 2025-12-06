@@ -1,4 +1,4 @@
--/- Day 6: Trash Compactor -/
+/- Day 6: Trash Compactor -/
 import AoC2025.Util
 
 namespace AoC2025.Day6
