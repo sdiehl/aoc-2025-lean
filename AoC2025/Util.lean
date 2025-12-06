@@ -7,6 +7,9 @@ def readFile (path : String) : IO String := do
 def lines (s : String) : List String :=
   s.splitOn "\n" |>.map String.trim |>.filter (· ≠ "")
 
+def linesRaw (s : String) : List String :=
+  s.splitOn "\n" |>.filter (·.any (· != ' '))
+
 def splitBy (s : String) (delim : String) : List String :=
   s.splitOn delim |>.map String.trim |>.filter (· ≠ "")
 

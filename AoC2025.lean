@@ -4,3 +4,4 @@ import AoC2025.Day2
 import AoC2025.Day3
 import AoC2025.Day4
 import AoC2025.Day5
+import AoC2025.Day6
