@@ -30,5 +30,9 @@ def main : IO UInt32 := do
   AoC2025.Day6.run s!"{inputDir}/day6.txt"
   IO.println ""
 
+  IO.println "=== Day 7 ==="
+  AoC2025.Day7.run s!"{inputDir}/day7.txt"
+  IO.println ""
+
   IO.println "All days completed."
   return 0
