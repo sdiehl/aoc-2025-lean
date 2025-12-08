@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: Build and Verify
+    name: Build and Test
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -20,7 +20,10 @@ jobs:
       - name: Build Lean library and executables
         uses: leanprover/lean-action@v1
         with:
-          test: true
+          test: false
           lint: true
           use-github-cache: true
           use-mathlib-cache: false
+
+      - name: Run test suite
+        run: lake exe tests
