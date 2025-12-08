@@ -19,7 +19,7 @@ lake test # run all days
 | 5   | Dec 5  | Cafeteria           | [Day5.lean](AoC2025/Day5.lean) |
 | 6   | Dec 6  | Trash Compactor     | [Day6.lean](AoC2025/Day6.lean) |
 | 7   | Dec 7  | Laboratories        | [Day7.lean](AoC2025/Day7.lean) |
-| 8   | Dec 8  | TBD                 | -                              |
+| 8   | Dec 8  | Playground          | [Day8.lean](AoC2025/Day8.lean) |
 | 9   | Dec 9  | TBD                 | -                              |
 | 10  | Dec 10 | TBD                 | -                              |
 | 11  | Dec 11 | TBD                 | -                              |
