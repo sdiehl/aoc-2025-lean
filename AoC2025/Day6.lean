@@ -100,23 +100,24 @@ def parseHorizontal (input : String) : List Problem :=
         let nums := perRow.foldl (fun acc row => acc ++ numbersInRange row start stop) []
         if nums.isEmpty then none else some { numbers := nums, op }
 
-partial def parseVertical (input : String) : List Problem :=
+def parseVertical (input : String) : List Problem :=
   match splitInput input false with
   | none => []
   | some (numRows, opRow) =>
     let padded := padRows numRows
     let maxCol := padded.foldl (fun acc r => max acc r.length) 0
-    let rec go (col : Int) (nums : List Nat) (op : Option Op) (acc : List Problem) :=
-      if col < 0 then
+    let rec go (remaining : Nat) (nums : List Nat) (op : Option Op) (acc : List Problem) :=
+      match remaining with
+      | 0 =>
         match op with
         | some o => if nums.isEmpty then acc else { numbers := nums, op := o } :: acc
         | none => acc
-      else
-        let c := col.toNat
+      | remaining' + 1 =>
+        let c := remaining'
         if isSeparator padded c then
           match op with
-          | some o => go (col - 1) [] none (if nums.isEmpty then acc else { numbers := nums, op := o } :: acc)
-          | none => go (col - 1) [] none acc
+          | some o => go remaining' [] none (if nums.isEmpty then acc else { numbers := nums, op := o } :: acc)
+          | none => go remaining' [] none acc
         else
           let newNums := match columnToNumber padded c with
             | some n => n :: nums
@@ -124,8 +125,8 @@ partial def parseVertical (input : String) : List Problem :=
           let newOp := match columnToOp opRow c with
             | some o => some o
             | none => op
-          go (col - 1) newNums newOp acc
-    go (maxCol - 1) [] none []
+          go remaining' newNums newOp acc
+    go maxCol [] none []
 
 def solvePart1 (input : String) : Nat := sumResults (parseHorizontal input)
 

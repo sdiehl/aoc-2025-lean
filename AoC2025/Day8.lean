@@ -26,11 +26,6 @@ def allPairs (n : Nat) : List (Nat × Nat) := Id.run do
       pairs := (i, j) :: pairs
   return pairs
 
-/-! ## Union-Find with Quotient Types
-
-We model connected components mathematically as equivalence classes.
-Two nodes are equivalent if they belong to the same circuit. -/
-
 /-- Union-Find data structure -/
 structure UnionFind where
   parent : Array Nat
@@ -41,13 +36,16 @@ namespace UnionFind
 /-- Create a new UnionFind where each element is its own root -/
 def create (n : Nat) : UnionFind := { parent := Array.range n }
 
-/-- Find root with path compression -/
-partial def findRoot (uf : UnionFind) (i : Nat) : Nat × UnionFind :=
-  let p := uf.parent[i]!
-  if p == i then (i, uf)
-  else
-    let (root, uf') := findRoot uf p
-    (root, { parent := uf'.parent.set! i root })
+/-- Find root with path compression. Terminates because path length is bounded by array size. -/
+def findRoot (uf : UnionFind) (i : Nat) (fuel : Nat := uf.parent.size) : Nat × UnionFind :=
+  match fuel with
+  | 0 => (i, uf)
+  | fuel' + 1 =>
+    let p := uf.parent[i]!
+    if p == i then (i, uf)
+    else
+      let (root, uf') := findRoot uf p fuel'
+      (root, { parent := uf'.parent.set! i root })
 
 /-- Check if two elements are in the same component -/
 def connected (uf : UnionFind) (i j : Nat) : Bool × UnionFind :=
@@ -78,33 +76,25 @@ def componentSizes (uf : UnionFind) : List Nat :=
 
 end UnionFind
 
-/-! ## Quotient Type for Connected Components
-
-Mathematically, we can view connected components as equivalence classes.
-Two junction boxes are equivalent if they're in the same circuit.
-This is captured by the quotient type. -/
-
 /-- The connectivity relation on node indices -/
 def Connected (uf : UnionFind) (i j : Nat) : Prop :=
   (uf.findRoot i).1 = (uf.findRoot j).1
 
-/-- Proof that Connected is reflexive -/
 theorem connected_refl (uf : UnionFind) (i : Nat) : Connected uf i i := rfl
 
-/-- Proof that Connected is symmetric -/
 theorem connected_symm (uf : UnionFind) (i j : Nat) :
     Connected uf i j → Connected uf j i := fun h => h.symm
 
-/-- Proof that Connected is transitive -/
 theorem connected_trans (uf : UnionFind) (i j k : Nat) :
     Connected uf i j → Connected uf j k → Connected uf i k :=
   fun hij hjk => hij.trans hjk
 
-/-- Connected forms an equivalence relation -/
 theorem connected_equivalence (uf : UnionFind) : Equivalence (Connected uf) :=
   ⟨connected_refl uf, fun h => connected_symm uf _ _ h, fun h1 h2 => connected_trans uf _ _ _ h1 h2⟩
 
-/-! ## Solution -/
+/-- Decidable instance allows using Connected in if/decide expressions -/
+instance (uf : UnionFind) (i j : Nat) : Decidable (Connected uf i j) :=
+  if h : (uf.findRoot i).1 = (uf.findRoot j).1 then isTrue h else isFalse h
 
 def solvePart1 (input : String) : Nat :=
   let points := (lines input).filterMap parsePoint |>.toArray
@@ -116,7 +106,7 @@ def solvePart1 (input : String) : Nat :=
   let sizes := uf.componentSizes
   sizes.take 3 |>.foldl (· * ·) 1
 
-partial def findLastMerge (sorted : List (Int × Nat × Nat)) (uf : UnionFind)
+def findLastMerge (sorted : List (Int × Nat × Nat)) (uf : UnionFind)
     : Option (Nat × Nat) :=
   match sorted with
   | [] => none
@@ -127,6 +117,7 @@ partial def findLastMerge (sorted : List (Int × Nat × Nat)) (uf : UnionFind)
       let uf'' := uf'.union i j
       if uf''.componentCount == 1 then some (i, j)
       else findLastMerge rest uf''
+termination_by sorted.length
 
 def solvePart2 (input : String) : Int :=
   let points := (lines input).filterMap parsePoint |>.toArray

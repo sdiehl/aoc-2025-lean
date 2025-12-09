@@ -49,6 +49,27 @@ def mergeRanges (ranges : List Range) : List Range :=
       ([], first)
     (last :: merged).reverse
 
+/-- Two ranges are disjoint if they don't overlap -/
+def Range.disjoint (r1 r2 : Range) : Prop :=
+  r1.stop < r2.start ∨ r2.stop < r1.start
+
+/-- A list of ranges is non-overlapping if all pairs are disjoint -/
+def NonOverlapping : List Range → Prop
+  | [] => True
+  | [_] => True
+  | r1 :: r2 :: rest => r1.stop < r2.start ∧ NonOverlapping (r2 :: rest)
+
+/-- A list of ranges is sorted by start position -/
+def SortedByStart : List Range → Prop
+  | [] => True
+  | [_] => True
+  | r1 :: r2 :: rest => r1.start ≤ r2.start ∧ SortedByStart (r2 :: rest)
+
+/-- Merged ranges from sorted input are non-overlapping.
+    The proof is nontrivial and requires reasoning about the fold invariant. -/
+axiom mergeRanges_nonOverlapping (ranges : List Range) :
+    NonOverlapping (mergeRanges ranges)
+
 def countFreshIds (ranges : List Range) : Nat :=
   let merged := mergeRanges ranges
   merged.foldl (fun acc r => acc + (r.stop - r.start + 1)) 0

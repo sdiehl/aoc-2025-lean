@@ -51,12 +51,15 @@ def removeRolls (g : Grid) (positions : List (Nat × Nat)) : Grid :=
     cells.modify row (·.set! col '.')) g.cells
   { g with cells := newCells }
 
-partial def removeAllAccessible (g : Grid) (total : Nat) : Nat :=
-  let accessible := findAccessibleRolls g
-  if accessible.isEmpty then total
-  else
-    let newGrid := removeRolls g accessible
-    removeAllAccessible newGrid (total + accessible.length)
+def removeAllAccessible (g : Grid) (total : Nat) (fuel : Nat) : Nat :=
+  match fuel with
+  | 0 => total
+  | fuel' + 1 =>
+    let accessible := findAccessibleRolls g
+    if accessible.isEmpty then total
+    else
+      let newGrid := removeRolls g accessible
+      removeAllAccessible newGrid (total + accessible.length) fuel'
 
 def solvePart1 (input : String) : Nat :=
   let grid := parseGrid input
@@ -64,7 +67,7 @@ def solvePart1 (input : String) : Nat :=
 
 def solvePart2 (input : String) : Nat :=
   let grid := parseGrid input
-  removeAllAccessible grid 0
+  removeAllAccessible grid 0 (grid.height * grid.width)
 
 def run (inputPath : String) : IO Unit := do
   let input ← readFile inputPath

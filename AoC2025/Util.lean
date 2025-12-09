@@ -32,4 +32,7 @@ def pow10 (n : Nat) : Nat :=
 def sum (xs : List Nat) : Nat :=
   xs.foldl (· + ·) 0
 
+def charToDigit (c : Char) : Nat :=
+  c.toNat - '0'.toNat
+
 end AoC2025.Util

@@ -5,9 +5,6 @@ namespace AoC2025.Day3
 
 open AoC2025.Util
 
-def charToDigit (c : Char) : Nat :=
-  c.toNat - '0'.toNat
-
 def maxJoltageK (bank : String) (k : Nat) : Nat :=
   let digits := bank.toList.map charToDigit |>.toArray
   let n := digits.size
