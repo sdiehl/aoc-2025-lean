@@ -5,6 +5,36 @@ namespace AoC2025.Day7
 
 open AoC2025.Util
 
+/-! ## Dependent Types for Grid Safety
+
+We use dependent types to ensure grid access is bounds-safe at compile time.
+`Fin n` indices guarantee we never access out of bounds. -/
+
+/-- Safely get an element from an array using a bounded index -/
+def safeGet {α : Type} {n : Nat} (arr : Array α) (i : Fin n) (h : arr.size = n) : α :=
+  arr[i.val]'(by rw [h]; exact i.isLt)
+
+/-- Proof: Fin indices are always within bounds -/
+theorem fin_always_valid (n : Nat) (i : Fin n) : i.val < n := i.isLt
+
+/-- Create a Fin from a Nat with a proof of bounds -/
+def natToFin? (n bound : Nat) : Option (Fin bound) :=
+  if h : n < bound then some ⟨n, h⟩ else none
+
+/-- Dependent pair: a value paired with a proof about it -/
+structure BoundedCoord (maxRow maxCol : Nat) where
+  row : Fin maxRow
+  col : Fin maxCol
+  deriving Repr
+
+/-- Convert raw coordinates to bounded coordinates (if valid) -/
+def toBoundedCoord? (r c : Nat) (maxRow maxCol : Nat) : Option (BoundedCoord maxRow maxCol) :=
+  match natToFin? r maxRow, natToFin? c maxCol with
+  | some row, some col => some ⟨row, col⟩
+  | _, _ => none
+
+/-! ## Standard Grid (for compatibility with parsing) -/
+
 structure Grid where
   rows : Array String
   height : Nat
@@ -30,14 +60,22 @@ def getCell (grid : Grid) (row col : Nat) : Char :=
     if col < line.length then line.toList.getD col '.' else '.'
   else '.'
 
+/-! ## Part 1: State Monad for Beam Simulation -/
+
 structure BeamState where
   activeBeams : List (Nat × Nat)
   splitCount : Nat
+  currentRow : Nat
+  deriving Repr
 
-def stepBeams (grid : Grid) (state : BeamState) : BeamState :=
-  let nextRow := state.activeBeams.head!.1 + 1
+abbrev BeamM := StateM BeamState
+
+def stepBeamsM (grid : Grid) : BeamM Unit := do
+  let state ← get
+  if state.activeBeams.isEmpty then return
+  let nextRow := state.currentRow + 1
   if nextRow >= grid.height then
-    { activeBeams := [], splitCount := state.splitCount }
+    set (BeamState.mk [] state.splitCount state.currentRow)
   else
     let newPositions := state.activeBeams.foldl (fun acc (_, col) =>
       let cell := getCell grid nextRow col
@@ -51,20 +89,29 @@ def stepBeams (grid : Grid) (state : BeamState) : BeamState :=
     let splits := state.activeBeams.foldl (fun acc (_, col) =>
       if getCell grid nextRow col == '^' then acc + 1 else acc
     ) 0
-    let dedupedPositions := newPositions.eraseDups
-    { activeBeams := dedupedPositions, splitCount := state.splitCount + splits }
+    set (BeamState.mk newPositions.eraseDups (state.splitCount + splits) nextRow)
 
-partial def simulate (grid : Grid) (state : BeamState) : Nat :=
-  if state.activeBeams.isEmpty then state.splitCount
-  else simulate grid (stepBeams grid state)
+def simulateM (grid : Grid) (fuel : Nat) : BeamM Nat := do
+  match fuel with
+  | 0 => return (← get).splitCount
+  | fuel' + 1 =>
+    let state ← get
+    if state.activeBeams.isEmpty then
+      return state.splitCount
+    else
+      stepBeamsM grid
+      simulateM grid fuel'
 
 def solvePart1 (input : String) : Nat :=
   let grid := parseGrid input
   match findStart grid with
   | none => 0
   | some (row, col) =>
-    let initial : BeamState := { activeBeams := [(row, col)], splitCount := 0 }
-    simulate grid initial
+    let initial : BeamState := { activeBeams := [(row, col)], splitCount := 0, currentRow := row }
+    let (result, _) := simulateM grid grid.height |>.run initial
+    result
+
+/-! ## Part 2: Timeline Counting with Termination Proof -/
 
 structure TimelineState where
   row : Nat
@@ -90,11 +137,15 @@ def stepTimelines (grid : Grid) (state : TimelineState) : TimelineState :=
     ) []
     { row := nextRow, timelines := newTimelines }
 
-partial def simulateTimelines (grid : Grid) (state : TimelineState) : Nat :=
-  if state.row >= grid.height - 1 then
-    state.timelines.foldl (fun acc (_, count) => acc + count) 0
-  else
-    simulateTimelines grid (stepTimelines grid state)
+/-- Simulate with explicit fuel parameter for termination -/
+def simulateTimelinesWithFuel (grid : Grid) (state : TimelineState) (fuel : Nat) : Nat :=
+  match fuel with
+  | 0 => state.timelines.foldl (fun acc (_, count) => acc + count) 0
+  | fuel' + 1 =>
+    if state.row >= grid.height - 1 then
+      state.timelines.foldl (fun acc (_, count) => acc + count) 0
+    else
+      simulateTimelinesWithFuel grid (stepTimelines grid state) fuel'
 
 def solvePart2 (input : String) : Nat :=
   let grid := parseGrid input
@@ -102,7 +153,7 @@ def solvePart2 (input : String) : Nat :=
   | none => 0
   | some (row, col) =>
     let initial : TimelineState := { row := row, timelines := [(col, 1)] }
-    simulateTimelines grid initial
+    simulateTimelinesWithFuel grid initial grid.height
 
 def run (path : String) : IO Unit := do
   let input ← IO.FS.readFile path

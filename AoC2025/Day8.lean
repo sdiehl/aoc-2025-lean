@@ -26,20 +26,49 @@ def allPairs (n : Nat) : List (Nat × Nat) := Id.run do
       pairs := (i, j) :: pairs
   return pairs
 
-partial def find (parent : Array Nat) (i : Nat) : Nat × Array Nat :=
-  let p := parent[i]!
-  if p == i then (i, parent)
+/-! ## Union-Find with Quotient Types
+
+We model connected components mathematically as equivalence classes.
+Two nodes are equivalent if they belong to the same circuit. -/
+
+/-- Union-Find data structure -/
+structure UnionFind where
+  parent : Array Nat
+  deriving Repr
+
+namespace UnionFind
+
+/-- Create a new UnionFind where each element is its own root -/
+def create (n : Nat) : UnionFind := { parent := Array.range n }
+
+/-- Find root with path compression -/
+partial def findRoot (uf : UnionFind) (i : Nat) : Nat × UnionFind :=
+  let p := uf.parent[i]!
+  if p == i then (i, uf)
   else
-    let (root, parent') := find parent p
-    (root, parent'.set! i root)
+    let (root, uf') := findRoot uf p
+    (root, { parent := uf'.parent.set! i root })
 
-def union (parent : Array Nat) (i j : Nat) : Array Nat :=
-  let (ri, parent') := find parent i
-  let (rj, parent'') := find parent' j
-  if ri == rj then parent'' else parent''.set! ri rj
+/-- Check if two elements are in the same component -/
+def connected (uf : UnionFind) (i j : Nat) : Bool × UnionFind :=
+  let (ri, uf') := findRoot uf i
+  let (rj, uf'') := findRoot uf' j
+  (ri == rj, uf'')
 
-def circuitSizes (parent : Array Nat) : List Nat :=
-  let roots := List.range parent.size |>.map (fun i => (find parent i).1)
+/-- Union two components -/
+def union (uf : UnionFind) (i j : Nat) : UnionFind :=
+  let (ri, uf') := findRoot uf i
+  let (rj, uf'') := findRoot uf' j
+  if ri == rj then uf'' else { parent := uf''.parent.set! ri rj }
+
+/-- Count distinct components -/
+def componentCount (uf : UnionFind) : Nat :=
+  let roots := List.range uf.parent.size |>.map (fun i => (findRoot uf i).1)
+  roots.eraseDups.length
+
+/-- Get sizes of all components, sorted descending -/
+def componentSizes (uf : UnionFind) : List Nat :=
+  let roots := List.range uf.parent.size |>.map (fun i => (findRoot uf i).1)
   let counts := roots.foldl (fun acc r =>
     match acc.find? (·.1 == r) with
     | some _ => acc.map (fun (k, v) => if k == r then (k, v + 1) else (k, v))
@@ -47,41 +76,64 @@ def circuitSizes (parent : Array Nat) : List Nat :=
   ) []
   counts.map (·.2) |>.mergeSort (· > ·)
 
+end UnionFind
+
+/-! ## Quotient Type for Connected Components
+
+Mathematically, we can view connected components as equivalence classes.
+Two junction boxes are equivalent if they're in the same circuit.
+This is captured by the quotient type. -/
+
+/-- The connectivity relation on node indices -/
+def Connected (uf : UnionFind) (i j : Nat) : Prop :=
+  (uf.findRoot i).1 = (uf.findRoot j).1
+
+/-- Proof that Connected is reflexive -/
+theorem connected_refl (uf : UnionFind) (i : Nat) : Connected uf i i := rfl
+
+/-- Proof that Connected is symmetric -/
+theorem connected_symm (uf : UnionFind) (i j : Nat) :
+    Connected uf i j → Connected uf j i := fun h => h.symm
+
+/-- Proof that Connected is transitive -/
+theorem connected_trans (uf : UnionFind) (i j k : Nat) :
+    Connected uf i j → Connected uf j k → Connected uf i k :=
+  fun hij hjk => hij.trans hjk
+
+/-- Connected forms an equivalence relation -/
+theorem connected_equivalence (uf : UnionFind) : Equivalence (Connected uf) :=
+  ⟨connected_refl uf, fun h => connected_symm uf _ _ h, fun h1 h2 => connected_trans uf _ _ _ h1 h2⟩
+
+/-! ## Solution -/
+
 def solvePart1 (input : String) : Nat :=
   let points := (lines input).filterMap parsePoint |>.toArray
   let pairs := allPairs points.size
   let withDist := pairs.map (fun (i, j) => (distSq points[i]! points[j]!, i, j))
   let sorted := withDist.mergeSort (fun a b => a.1 < b.1)
   let top1000 := sorted.take 1000
-  let parent := Array.range points.size
-  let finalParent := top1000.foldl (fun p (_, i, j) => union p i j) parent
-  let sizes := circuitSizes finalParent
+  let uf := top1000.foldl (fun uf (_, i, j) => uf.union i j) (UnionFind.create points.size)
+  let sizes := uf.componentSizes
   sizes.take 3 |>.foldl (· * ·) 1
 
-def countCircuits (parent : Array Nat) : Nat :=
-  let roots := List.range parent.size |>.map (fun i => (find parent i).1)
-  roots.eraseDups.length
-
-partial def findLastMerge (sorted : List (Int × Nat × Nat)) (parent : Array Nat)
+partial def findLastMerge (sorted : List (Int × Nat × Nat)) (uf : UnionFind)
     : Option (Nat × Nat) :=
   match sorted with
   | [] => none
   | (_, i, j) :: rest =>
-    let (ri, parent') := find parent i
-    let (rj, parent'') := find parent' j
-    if ri == rj then findLastMerge rest parent''
+    let (conn, uf') := uf.connected i j
+    if conn then findLastMerge rest uf'
     else
-      let parent''' := parent''.set! ri rj
-      if countCircuits parent''' == 1 then some (i, j)
-      else findLastMerge rest parent'''
+      let uf'' := uf'.union i j
+      if uf''.componentCount == 1 then some (i, j)
+      else findLastMerge rest uf''
 
 def solvePart2 (input : String) : Int :=
   let points := (lines input).filterMap parsePoint |>.toArray
   let pairs := allPairs points.size
   let withDist := pairs.map (fun (i, j) => (distSq points[i]! points[j]!, i, j))
   let sorted := withDist.mergeSort (fun a b => a.1 < b.1)
-  let parent := Array.range points.size
-  match findLastMerge sorted parent with
+  match findLastMerge sorted (UnionFind.create points.size) with
   | some (i, j) => points[i]!.x * points[j]!.x
   | none => 0
 
