@@ -87,6 +87,15 @@ def runDay8 (inputPath answerPath : String) : IO Bool := do
   let r2 ← check "Part 2" p2 exp2
   return r1 && r2
 
+def runDay9 (inputPath answerPath : String) : IO Bool := do
+  let input ← IO.FS.readFile inputPath
+  let (exp1, exp2) ← loadExpected answerPath
+  let p1 := toString (AoC2025.Day9.solvePart1 input)
+  let p2 := toString (AoC2025.Day9.solvePart2 input)
+  let r1 ← check "Part 1" p1 exp1
+  let r2 ← check "Part 2" p2 exp2
+  return r1 && r2
+
 def main : IO UInt32 := do
   let inputDir := "inputs"
   let answerDir := "answers"
@@ -118,6 +127,9 @@ def main : IO UInt32 := do
 
   IO.println "Day 8: Playground"
   allPassed := allPassed && (← runDay8 s!"{inputDir}/day8.txt" s!"{answerDir}/day8.txt")
+
+  IO.println "Day 9: Movie Theater"
+  allPassed := allPassed && (← runDay9 s!"{inputDir}/day9.txt" s!"{answerDir}/day9.txt")
 
   IO.println ""
   if allPassed then
