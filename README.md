@@ -12,6 +12,12 @@ lake test # run all days
 .lake/build/bin/aoc2025 2    # run day 2
 ```
 
+Note that Day 10 requires the [HiGHs solver](https://highs.dev/) to be installed:
+
+```bash
+brew install highs
+```
+
 | Day | Date   | Problem                                                    | Solution                         |
 |-----|--------|------------------------------------------------------------|----------------------------------|
 | 1   | Dec 1  | [Secret Entrance](https://adventofcode.com/2025/day/1)     | [Day1.lean](AoC2025/Day1.lean)   |
