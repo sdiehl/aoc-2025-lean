@@ -17,6 +17,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install HiGHS solver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y highs
+
       - name: Build Lean library and executables
         uses: leanprover/lean-action@v1
         with:
