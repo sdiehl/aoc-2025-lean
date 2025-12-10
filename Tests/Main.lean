@@ -100,7 +100,7 @@ def runDay10 (inputPath answerPath : String) : IO Bool := do
   let input ← IO.FS.readFile inputPath
   let (exp1, exp2) ← loadExpected answerPath
   let p1 := toString (AoC2025.Day10.solvePart1 input)
-  let p2 := toString (AoC2025.Day10.solvePart2 input)
+  let p2 := toString (← AoC2025.Day10.solvePart2 input)
   let r1 ← check "Part 1" p1 exp1
   let r2 ← check "Part 2" p2 exp2
   return r1 && r2
