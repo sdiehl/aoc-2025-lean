@@ -20,7 +20,7 @@ jobs:
       - name: Install HiGHS solver
         run: |
           sudo apt-get update
-          sudo apt-get install -y libopenblas-dev libgomp1
+          sudo apt-get install -y libopenblas-dev libgomp1 libmetis5
           curl -L -o highs.tar.gz "https://github.com/JuliaBinaryWrappers/HiGHSstatic_jll.jl/releases/download/HiGHSstatic-v1.12.0%2B0/HiGHSstatic.v1.12.0.x86_64-linux-gnu-cxx11.tar.gz"
           tar -xzf highs.tar.gz
           sudo cp bin/highs /usr/local/bin/
