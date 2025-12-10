@@ -19,11 +19,10 @@ jobs:
 
       - name: Install HiGHS solver
         run: |
-          wget https://github.com/ERGO-Code/HiGHS/releases/download/v1.7.2/HiGHS.v1.7.2.x86_64-linux-gnu-cxx11.tar.gz
-          tar -xzf HiGHS.v1.7.2.x86_64-linux-gnu-cxx11.tar.gz
-          sudo cp HiGHS.v1.7.2.x86_64-linux-gnu-cxx11/bin/highs /usr/local/bin/
-          sudo cp HiGHS.v1.7.2.x86_64-linux-gnu-cxx11/lib/*.so* /usr/local/lib/
-          sudo ldconfig
+          curl -L -o highs.tar.gz "https://github.com/JuliaBinaryWrappers/HiGHSstatic_jll.jl/releases/download/HiGHSstatic-v1.12.0%2B0/HiGHSstatic.v1.12.0.x86_64-linux-gnu-cxx11.tar.gz"
+          tar -xzf highs.tar.gz
+          sudo cp bin/highs /usr/local/bin/
+          highs --version
 
       - name: Build Lean library and executables
         uses: leanprover/lean-action@v1
