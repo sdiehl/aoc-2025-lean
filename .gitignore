@@ -12,3 +12,5 @@ docbuild/lake-manifest.json
 
 .claude
 .codex
+
+HiGHS.log
