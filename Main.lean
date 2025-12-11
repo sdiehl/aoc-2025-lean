@@ -15,6 +15,7 @@ def main (args : List String) : IO Unit := do
   | "8" => AoC2025.Day8.run s!"{inputDir}/day8.txt"
   | "9" => AoC2025.Day9.run s!"{inputDir}/day9.txt"
   | "10" => AoC2025.Day10.run s!"{inputDir}/day10.txt"
+  | "11" => AoC2025.Day11.run s!"{inputDir}/day11.txt"
   | "all" => do
     AoC2025.Day1.run s!"{inputDir}/day1.txt"
     AoC2025.Day2.run s!"{inputDir}/day2.txt"
@@ -26,4 +27,5 @@ def main (args : List String) : IO Unit := do
     AoC2025.Day8.run s!"{inputDir}/day8.txt"
     AoC2025.Day9.run s!"{inputDir}/day9.txt"
     AoC2025.Day10.run s!"{inputDir}/day10.txt"
-  | _ => IO.println s!"Unknown day: {day}. Use 1-10 or 'all'."
+    AoC2025.Day11.run s!"{inputDir}/day11.txt"
+  | _ => IO.println s!"Unknown day: {day}. Use 1-11 or 'all'."
