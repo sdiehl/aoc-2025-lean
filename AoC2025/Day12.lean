@@ -88,6 +88,7 @@ def solvePart1 (input : String) : Nat :=
   regions.filter (canFitByArea · cellCounts) |>.length
 
 def solvePart2 (_ : String) : Nat :=
+  -- There is no Part 2 for this day ;-)
   42
 
 def run (path : String) : IO Unit := do

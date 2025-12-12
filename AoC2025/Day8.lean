@@ -19,13 +19,6 @@ def parsePoint (s : String) : Option Point :=
 def distSq (p1 p2 : Point) : Int :=
   (p1.x - p2.x)^2 + (p1.y - p2.y)^2 + (p1.z - p2.z)^2
 
-def allPairs (n : Nat) : List (Nat × Nat) := Id.run do
-  let mut pairs := []
-  for i in [:n] do
-    for j in [i+1:n] do
-      pairs := (i, j) :: pairs
-  return pairs
-
 /-- Union-Find data structure -/
 structure UnionFind where
   parent : Array Nat

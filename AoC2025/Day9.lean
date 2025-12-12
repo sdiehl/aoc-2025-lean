@@ -13,18 +13,10 @@ def parsePoint (s : String) : Option (Int × Int) :=
 def rectArea (p1 p2 : Int × Int) : Int :=
   ((p2.1 - p1.1).natAbs + 1) * ((p2.2 - p1.2).natAbs + 1)
 
-def allPairs (points : List (Int × Int)) : List ((Int × Int) × (Int × Int)) := Id.run do
-  let arr := points.toArray
-  let mut pairs := []
-  for i in [:arr.size] do
-    for j in [i+1:arr.size] do
-      pairs := (arr[i]!, arr[j]!) :: pairs
-  return pairs
-
 def solvePart1 (input : String) : Int :=
-  let points := (lines input).filterMap parsePoint
-  let pairs := allPairs points
-  pairs.foldl (fun acc (p1, p2) => max acc (rectArea p1 p2)) 0
+  let points := (lines input).filterMap parsePoint |>.toArray
+  let pairs := allPairs points.size
+  pairs.foldl (fun acc (i, j) => max acc (rectArea points[i]! points[j]!)) 0
 
 structure Segment where
   x1 : Int
@@ -87,8 +79,11 @@ def rectValidInPolygon (segments : List Segment) (p1 p2 : Int × Int) : Bool :=
 def solvePart2 (input : String) : Int :=
   let redTiles := (lines input).filterMap parsePoint
   let segments := buildSegments redTiles
-  let pairs := allPairs redTiles
-  pairs.foldl (fun acc (p1, p2) =>
+  let arr := redTiles.toArray
+  let pairs := allPairs arr.size
+  pairs.foldl (fun acc (i, j) =>
+    let p1 := arr[i]!
+    let p2 := arr[j]!
     if rectValidInPolygon segments p1 p2 then max acc (rectArea p1 p2) else acc
   ) 0
 

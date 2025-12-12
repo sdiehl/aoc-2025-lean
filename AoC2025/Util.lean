@@ -32,7 +32,17 @@ def pow10 (n : Nat) : Nat :=
 def sum (xs : List Nat) : Nat :=
   xs.foldl (· + ·) 0
 
+def product (xs : List Nat) : Nat :=
+  xs.foldl (· * ·) 1
+
 def charToDigit (c : Char) : Nat :=
   c.toNat - '0'.toNat
+
+def allPairs (n : Nat) : List (Nat × Nat) := Id.run do
+  let mut pairs : List (Nat × Nat) := []
+  for i in [:n] do
+    for j in [i+1:n] do
+      pairs := (i, j) :: pairs
+  return pairs
 
 end AoC2025.Util
