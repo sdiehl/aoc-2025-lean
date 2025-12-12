@@ -31,4 +31,4 @@ brew install highs
 | 9   | Dec 9  | [Movie Theater](https://adventofcode.com/2025/day/9)       | [Day9.lean](AoC2025/Day9.lean)   |
 | 10  | Dec 10 | [Factory](https://adventofcode.com/2025/day/10)            | [Day10.lean](AoC2025/Day10.lean) |
 | 11  | Dec 11 | [Reactor](https://adventofcode.com/2025/day/11)            | [Day11.lean](AoC2025/Day11.lean) |
-| 12  | Dec 12 | TBD                                                        | -                                |
+| 12  | Dec 12 | [Christmas Tree Farm](https://adventofcode.com/2025/day/12)| [Day12.lean](AoC2025/Day12.lean) |
